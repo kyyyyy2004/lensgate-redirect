@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Opening LensGate...</title>
+  <style>
+    body {
+      background: #0a0a1a;
+      color: #fff;
+      font-family: -apple-system, system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      text-align: center;
+      padding: 20px;
+    }
+    .container { max-width: 400px; }
+    h1 { color: #e94560; font-size: 24px; }
+    p { color: #888; font-size: 14px; line-height: 1.6; }
+    a {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 14px 28px;
+      background: #e94560;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #333;
+      border-top-color: #e94560;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { color: #e94560; margin-top: 16px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner" id="spinner"></div>
+    <h1>Opening LensGate</h1>
+    <p id="msg">Redirecting to the app...</p>
+    <a href="#" id="openBtn" style="display:none;">Open LensGate App</a>
+    <div class="error" id="error"></div>
+  </div>
+  <script>
+    (function() {
+      var hash = window.location.hash || '';
+      var query = window.location.search || '';
+      var params = {};
+      var source = hash.startsWith('#') ? hash.substring(1) : (query.startsWith('?') ? query.substring(1) : '');
+      
+      if (source) {
+        source.split('&').forEach(function(pair) {
+          var parts = pair.split('=');
+          if (parts.length === 2) {
+            params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+          }
+        });
+      }
+      
+      var accessToken = params.access_token || '';
+      var refreshToken = params.refresh_token || '';
+      var type = params.type || '';
+      
+      if (!accessToken || !refreshToken) {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('msg').textContent = 'Invalid or expired reset link.';
+        document.getElementById('error').textContent = 'Please request a new password reset email.';
+        return;
+      }
+      
+      var deepLink = 'ph.lensgate.app://reset-password#access_token=' + encodeURIComponent(accessToken) + '&refresh_token=' + encodeURIComponent(refreshToken) + '&type=' + encodeURIComponent(type);
+      
+      var btn = document.getElementById('openBtn');
+      btn.href = deepLink;
+      btn.style.display = 'inline-block';
+      
+      setTimeout(function() {
+        window.location.href = deepLink;
+      }, 300);
+    })();
+  </script>
+</body>
+</html>
