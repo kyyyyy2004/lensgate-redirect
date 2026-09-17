@@ -57,10 +57,10 @@
       var hash = window.location.hash || '';
       var query = window.location.search || '';
       var params = {};
-      var source = hash.startsWith('#') ? hash.substring(1) : (query.startsWith('?') ? query.substring(1) : '');
       
-      if (source) {
-        source.split('&').forEach(function(pair) {
+      // Parse query string (?code=...)
+      if (query.startsWith('?')) {
+        query.substring(1).split('&').forEach(function(pair) {
           var parts = pair.split('=');
           if (parts.length === 2) {
             params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
@@ -68,18 +68,37 @@
         });
       }
       
+      // Parse hash (#access_token=...)
+      if (hash.startsWith('#')) {
+        hash.substring(1).split('&').forEach(function(pair) {
+          var parts = pair.split('=');
+          if (parts.length === 2) {
+            params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+          }
+        });
+      }
+      
+      var code = params.code || '';
       var accessToken = params.access_token || '';
       var refreshToken = params.refresh_token || '';
       var type = params.type || '';
       
-      if (!accessToken || !refreshToken) {
+      console.log('Params:', { hasCode: !!code, hasAccess: !!accessToken, hasRefresh: !!refreshToken });
+      
+      var deepLink = '';
+      
+      if (code) {
+        // Modern PKCE flow
+        deepLink = 'ph.lensgate.app://reset-password?code=' + encodeURIComponent(code);
+      } else if (accessToken && refreshToken) {
+        // Legacy flow
+        deepLink = 'ph.lensgate.app://reset-password#access_token=' + encodeURIComponent(accessToken) + '&refresh_token=' + encodeURIComponent(refreshToken) + '&type=' + encodeURIComponent(type);
+      } else {
         document.getElementById('spinner').style.display = 'none';
         document.getElementById('msg').textContent = 'Invalid or expired reset link.';
         document.getElementById('error').textContent = 'Please request a new password reset email.';
         return;
       }
-      
-      var deepLink = 'ph.lensgate.app://reset-password#access_token=' + encodeURIComponent(accessToken) + '&refresh_token=' + encodeURIComponent(refreshToken) + '&type=' + encodeURIComponent(type);
       
       var btn = document.getElementById('openBtn');
       btn.href = deepLink;
